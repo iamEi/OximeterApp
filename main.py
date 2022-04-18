@@ -11,18 +11,13 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.clock import Clock
 from kivy.properties import StringProperty
 from kivy.properties import NumericProperty
-from kivy.storage.jsonstore import JsonStore
 from kivy.network.urlrequest import UrlRequest
-from kivy.utils import get_color_from_hex as to_hex
-import json
+from kivy.utils import platform
 
-
-# r = UrlRequest("http://www.webcode.me",on_success=got_text)
 
 
 patients = []
 widgets = []
-storage = JsonStore('patients.json')
 Builder.load_file('oximeterui.kv')
 
 class Patient(BoxLayout):
@@ -51,9 +46,7 @@ class Patient(BoxLayout):
 	#some urlRequest functions
 	#placeholder, must be the web server of the esp8266 (the ip)
 	def got_text(self,req,result):
-		header = req.resp_headers
-		content_type = header.get('content-type', header.get('Content-Type'))
-		print(result)
+		self.oxygen = result[0]['random']
 		self.status = 'Connected'
 
 	def failed(self,req,result):
@@ -67,25 +60,20 @@ class Patient(BoxLayout):
 	#update patient values
 	def update(self):
 		#this is to illustrate that different addresses can be called at the same time
-		url = ("https://httpbin.org/get","http://www.webcode.me")[random.randint(0,1)]
-		print("current url:",url)
+		url = "https://csrng.net/csrng/csrng.php?min=90&max=100"
 		r = UrlRequest(url,on_success=self.got_text,on_progress=self.prog,on_failure=self.failed)
-		self.oxygen = random.randint(90,100)
 		self.battery = random.randint(1,100)
-		# self.status = 'Connected'
 
 	def save(self):
 		self.name = self.ids.name.text
 		self.address = self.ids.ipaddress.text
-		self.notes = self.ids.notes.text
-		
+		# self.notes = self.ids.notes.text
+
 		if self not in patients:
 			patients.append(self)
 		if self.ids.patient_card not in widgets:
 			widgets.append(self.ids.patient_card)
 
-		for i in patients:
-			storage.put(i.name, oxygen=i.oxygen,address=i.address,note=i.notes)
 
 	#delete all widgets and redraw all except the one deleted
 	def delete(self):
@@ -116,8 +104,7 @@ class OximeterApp(App):
 		config.setdefaults('patients',{'name':'[]','address':'[]','notes':'[]'})
 
 	def build(self):
-		Window.clearcolor = (31/255,40/255,51/255,1)	
-		# Window.clearcolor = to_hex('#28334aff')	
+		Window.borderless = True if platform =='android' else False
 		return AppLayout()
 
 
