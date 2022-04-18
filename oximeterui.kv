@@ -1,89 +1,107 @@
+#:kivy 2.0.0
 #:import platform kivy.utils.platform
 #:import hex kivy.utils.get_color_from_hex
+#:import Gradient kivy_gradient.Gradient
+
+#:set gradients [hex('2A68AA'),hex('3981CE'),hex('2AA8AA')]
+#:set scheme [hex('30C2C4'),hex('C43230')]
+#:set font_color (0,0,0)
+#:set btn_color (1,1,1)
 
 <AppLayout>
 	BoxLayout:
-		size: root.width,root.height
 		orientation: "vertical"
-
+		size: root.width,root.height
 		BoxLayout:
 			orientation: "horizontal"
-			size_hint: (1,0.05) if platform=='win' else (0,0)
+			size_hint: (1,0.1) if platform=='android' else (0,0)
 			canvas:
 				Color:
-					rgb: (255/255, 212/255, 0/255)
-					# rgb: (69/255,162/255,158/255)
+					rgb: scheme[0]
 				Rectangle:
 					size: self.size
 					pos: self.pos
 
 			ScaleLabel:
 				text: "Oximeter App"
+				bold: True
+				color: btn_color
+				pos_hint: {"center_x":1}
 				font_size: '24sp'
-				text_size: self.size
-				valign: "middle"
-				padding_x: 5
-
+				padding_y: 5
+				
 		BoxLayout:
-			size_hint: 1,0.75
 			orientation: "vertical"
-			padding: [20,0,20,20]
-			spacing: '10sp'
+			padding: [50,10,50,20]
+			canvas:
+				Rectangle:
+					size: self.size
+					pos: self.pos
+					texture:
+						Gradient.vertical(
+						gradients[0],
+						gradients[1],
+						gradients[2]
+						)
+
+			BoxLayout:
+				size_hint: 1,0.75
+				orientation: "vertical"
+				spacing: '10sp'
+
+				ScrollView:
+					size: self.size
+					do_scroll_x: False
+					do_scroll_y: True
+
+					GridLayout:
+						id: container
+						margin: 30
+						cols: 1
+						size_hint_y: None
+						padding: 10
+						spacing: 10
+						row_default_height: root.height*0.15 if platform == 'android' else root.height*.25
+						row_force_default: True
+						height: self.minimum_height
 
 
-
-			ScrollView:
-				size: self.size
-				do_scroll_x: False
-				do_scroll_y: True
-
-				GridLayout:
-					id: container
-					cols: 1
-					size_hint_y: None
-					padding: 10
-					spacing: 10
-					row_default_height: root.height*0.15 if platform == 'android' else root.height*.25
-					row_force_default: True
-					height: self.minimum_height
-
-
-			Button:
-				id: add_meter
-				pos_hint: {'center_x': 0.5}
-				size_hint: (0.3,0.15) if platform == 'win' else (0.3,0.1) 
-				text: "Add Meter"
-				up_color: (69/255,162/255,158/255,1)
-				down_color: (255/255, 212/255, 0/255,1)
-				on_release: root.add_patient()
-				canvas.before:
-					Color:
-						rgba: self.up_color if self.state == 'normal' else self.down_color
-					RoundedRectangle:
-						size: self.size
-						pos: self.pos
-						radius: [(40, 40), (40, 40), (40, 40), (40, 40)]
+				Button:
+					id: add_meter
+					pos_hint: {'center_x': 0.5}
+					size_hint: (0.3,0.15) if platform == 'win' else (0.3,0.1) 
+					text: "Add Meter"
+					bold: True
+					color: btn_color
+					on_release: root.add_patient()
+					canvas.before:
+						Color:
+							rgba: scheme[1] if self.state == 'normal' else scheme[0]
+						RoundedRectangle:
+							size: self.size
+							pos: self.pos
+							radius: [(40, 40), (40, 40), (40, 40), (40, 40)]
 
 <Patient>
 	BoxLayout:
 		id: patient_card
 		orientation: "horizontal"
-		padding: 5
+		padding: 15
 		canvas.before:
 			Color:
-				rgba: (69/255,162/255,158/255,1)
+				rgb: scheme[0]
 			RoundedRectangle:
 				pos: self.pos
 				size: self.size
 				radius: [(20, 20), (20, 20), (20, 20), (20, 20)]
 
-
 		BoxLayout:
 			size_hint: 0.2,1
 			pos_hint: {'center_y': 0.5}
+
 			ScaleLabel:
 				text: "{}%".format(root.oxygen)
-		    	color: (0,0,0,1)
+		    	color: font_color
 			    font_size: '24sp'
 				canvas.before:
 			        Color:
@@ -93,16 +111,15 @@
 			            size: self.size
 
 			        Color:
-			        	rgba: (0,1,0,1) if root.oxygen >= 95 else (227/255, 48/255, 48/255,1)
+			        	rgba: (0,1,0,1) if root.oxygen >= 95 else scheme[1]
 
 			        Ellipse:
 			        	size: self.size
 			        	pos: self.pos
 			        	angle_end: int((root.oxygen / 100) * 360)
 
-			        Color:
-			        	#rgba: (197/255,198/255,199/255,1) 
-			        	rgba: (69/255,162/255,158/255,1)
+			        Color: 
+			        	rgba: hex("2AA8AA")
 
 			        Ellipse:
 			        	size: [self.width-30,self.height-30] if platform == 'win' else [self.width-20,self.height-20]
@@ -112,11 +129,12 @@
 			orientation: "vertical"
 			size_hint: 0.8,1
 			padding: 5
-			spacing: 5
+			spacing: 10
 
 			GridLayout:
 				cols: 2
 				size_hint: 1, 0.6
+				spacing: 10
 
 				ScaleLabel:
 					size_hint: 0.4,0.5
@@ -141,12 +159,6 @@
 					size_hint: 0.8,0.5
 					padding_y: [self.height / 2.0 - (self.line_height / 2.0) * len(self._lines), 0]
 					multiline: False
-			TextInput:
-				id: notes
-				text: root.notes
-				size_hint: 1,0.6
-				hint_text: "Notes:"
-				multiline: True
 
 			BoxLayout:
 				orientation: "horizontal"	
@@ -157,24 +169,22 @@
 					size_hint: 0.4,1
 					orientation: "vertical"
 
-
 					ScaleLabel:
 						text: "Battery: {}%\nStatus: {}".format(root.battery,root.status)
 						font_size: '15sp'
-						size_hint_x: None
-						halign: 'left'
+						pos_hint: {'center_x':0.3}
 
 				CardButton:
 					text: "Save"
+					bold: True
 					on_release: root.save()
-					size_hint: 0.3,1
+					size_hint: 0.1,1
 
 				CardButton:
 					text: "Delete"
+					bold: True
 					on_release: root.delete()
-					size_hint: 0.3,1
-
-
+					size_hint: 0.1,1
 
 <Label>
 	color: (0,0,0,1)
@@ -185,18 +195,17 @@
 
 <CardButton@Button>
 	font_size: '12sp'
-	#up_color: (197/255,198/255,199/255,1)
-	up_color: (255/255, 212/255, 0/255,1)
-	down_color: (255/255, 212/255, 0/255,1)
+	color: btn_color
 	canvas.before:
 		Color:
-			rgba: self.up_color if self.state == 'normal' else self.down_color
+			rgba: scheme[1] if self.state == 'normal' else gradients[0]
 		RoundedRectangle:
 			size: self.size
 			pos: self.pos
 			radius: [5]
 
 <ScaleLabel@Label>:
+	color: font_color
     _scale: 1. if self.texture_size[0] < self.width else float(self.width) / self.texture_size[0]
     canvas.before:
         PushMatrix
