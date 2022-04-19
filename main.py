@@ -4,6 +4,7 @@ kivy.require('2.0.0')
 import ast
 import random
 import certifi as cfi
+from plyer import notification
 from kivy.app import App
 from kivy.uix.widget import Widget
 from kivy.lang import Builder
@@ -47,6 +48,8 @@ class Patient(BoxLayout):
 	def on_success(self,req,result):
 		if result:
 			self.oxygen = result[0]['random']
+			if self.oxygen < 95:
+				notification.notify(title="Alert",message=f"{self.name} is currently at {self.oxygen}%")
 		self.status = 'Connected'
 
 	def on_fail(self,req,result):
@@ -64,7 +67,7 @@ class Patient(BoxLayout):
 	#update patient values
 	def update(self):
 		#this is to illustrate that different addresses can be called at the same time
-		url = "https://csrng.net/csrng/csrng.php?min=90&max=100"
+		url = "https://csrng.net/csrng/csrng.php?min=94&max=100"
 		r = UrlRequest(url,on_success=self.on_success,on_progress=self.on_progress,on_failure=self.on_fail,ca_file=cfi.where(),verify=True)
 		self.battery = random.randint(1,100)
 
@@ -110,6 +113,8 @@ class OximeterApp(App):
 	def build(self):
 		if platform == 'android':
 			Window.borderless = True
+			Window.softinputmode = "below_target"
+			Window.keyboard_anim_args = {"d":0.2,"t":"in_out_expo"}
 		else:
 			Window.borderless = False
 			Window.size = (650,650)
