@@ -96,7 +96,7 @@
 				radius: [(20, 20), (20, 20), (20, 20), (20, 20)]
 
 		BoxLayout:
-			size_hint: 0.2,1
+			size_hint: 0.2,0.8
 			pos_hint: {'center_y': 0.5}
 
 			ScaleLabel:
@@ -122,8 +122,8 @@
 			        	rgba: hex("2AA8AA")
 
 			        Ellipse:
-			        	size: [self.width-30,self.height-30] if platform == 'win' else [self.width-20,self.height-20]
-			        	pos: [(self.center_x-(self.width-30)/2),(self.center_y-(self.height-30)/2)] if platform == 'win' else [(self.center_x-(self.width-20)/2),(self.center_y-(self.height-20)/2)]
+			        	size: [self.width-25,self.height-25] if platform == 'win' else [self.width-20,self.height-20]
+			        	pos: [(self.center_x-(self.width-25)/2),(self.center_y-(self.height-25)/2)] if platform == 'win' else [(self.center_x-(self.width-20)/2),(self.center_y-(self.height-20)/2)]
 
 		BoxLayout:
 			orientation: "vertical"

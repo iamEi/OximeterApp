@@ -3,6 +3,7 @@ kivy.require('2.0.0')
 
 import ast
 import random
+import certifi as cfi
 from kivy.app import App
 from kivy.uix.widget import Widget
 from kivy.lang import Builder
@@ -13,8 +14,6 @@ from kivy.properties import StringProperty
 from kivy.properties import NumericProperty
 from kivy.network.urlrequest import UrlRequest
 from kivy.utils import platform
-
-
 
 patients = []
 widgets = []
@@ -45,23 +44,28 @@ class Patient(BoxLayout):
 
 	#some urlRequest functions
 	#placeholder, must be the web server of the esp8266 (the ip)
-	def got_text(self,req,result):
-		self.oxygen = result[0]['random']
+	def on_success(self,req,result):
+		if result:
+			self.oxygen = result[0]['random']
 		self.status = 'Connected'
 
-	def failed(self,req,result):
+	def on_fail(self,req,result):
 		self.status = 'Disconnected'
 		print(req.result)
 
-	def prog(self,req,current_size,total_size):
+	def on_progress(self,req,current_size,total_size):
 		self.status = "Connecting..."
+
+	def on_error(self,req,error):
+		print(error)
+		self.status = "Reconnecting..."
 
 
 	#update patient values
 	def update(self):
 		#this is to illustrate that different addresses can be called at the same time
 		url = "https://csrng.net/csrng/csrng.php?min=90&max=100"
-		r = UrlRequest(url,on_success=self.got_text,on_progress=self.prog,on_failure=self.failed)
+		r = UrlRequest(url,on_success=self.on_success,on_progress=self.on_progress,on_failure=self.on_fail,ca_file=cfi.where(),verify=True)
 		self.battery = random.randint(1,100)
 
 	def save(self):
@@ -104,7 +108,11 @@ class OximeterApp(App):
 		config.setdefaults('patients',{'name':'[]','address':'[]','notes':'[]'})
 
 	def build(self):
-		Window.borderless = True if platform =='android' else False
+		if platform == 'android':
+			Window.borderless = True
+		else:
+			Window.borderless = False
+			Window.size = (650,650)
 		return AppLayout()
 
 
