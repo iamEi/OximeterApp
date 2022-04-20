@@ -1,4 +1,5 @@
 import kivy
+from matplotlib import ticker
 kivy.require('2.0.0')
 
 import ast
@@ -29,7 +30,6 @@ class Patient(BoxLayout):
 	#these are user inputs. can be changed whenever the user wants as long as save is pressed
 	name = StringProperty('')
 	address = StringProperty('')
-	notes = StringProperty('')
 
 	def __init__(self):
 		super().__init__()
@@ -44,19 +44,18 @@ class Patient(BoxLayout):
 
 
 	#some urlRequest functions
-	#placeholder, must be the web server of the esp8266 (the ip)
 	def on_success(self,req,result):
-		if result:
+		if result[0]:
 			self.oxygen = result[0]['random']
 			if self.oxygen < 95:
-				notification.notify(title="Alert",message=f"{self.name} is currently at {self.oxygen}%")
+				notification.notify(title="Alert",message=f"{self.name} is currently at {self.oxygen}%",timeout=10,ticker="Spo2 Level Low",toast=True)
 		self.status = 'Connected'
 
 	def on_fail(self,req,result):
 		self.status = 'Disconnected'
 		print(req.result)
 
-	def on_progress(self,req,current_size,total_size):
+	def on_progress(self,req,result,chunk):
 		self.status = "Connecting..."
 
 	def on_error(self,req,error):
@@ -66,15 +65,15 @@ class Patient(BoxLayout):
 
 	#update patient values
 	def update(self):
-		#this is to illustrate that different addresses can be called at the same time
-		url = "https://csrng.net/csrng/csrng.php?min=94&max=100"
+		#placeholder, must be the web server of the esp8266 (the ip)
+		url = "https://csrng.net/csrng/csrng.php?min=93&max=95"
+		# url = "https://www.google.com/"
 		r = UrlRequest(url,on_success=self.on_success,on_progress=self.on_progress,on_failure=self.on_fail,ca_file=cfi.where(),verify=True)
 		self.battery = random.randint(1,100)
 
 	def save(self):
 		self.name = self.ids.name.text
 		self.address = self.ids.ipaddress.text
-		# self.notes = self.ids.notes.text
 
 		if self not in patients:
 			patients.append(self)
@@ -108,15 +107,15 @@ class AppLayout(Widget):
 
 class OximeterApp(App):
 	def build_config(self,config):
-		config.setdefaults('patients',{'name':'[]','address':'[]','notes':'[]'})
+		config.setdefaults('patients',{'name':'[]','address':'[]'})
 
 	def build(self):
 		if platform == 'android':
-			Window.borderless = True
-			Window.softinputmode = "below_target"
-			Window.keyboard_anim_args = {"d":0.2,"t":"in_out_expo"}
+			Window.borderless = 1
+			Window.softinput_mode = "below_target"
+			Window.keyboard_anim_args = {"d":0.2,"t":"linear"}
 		else:
-			Window.borderless = False
+			Window.borderless = 0
 			Window.size = (650,650)
 		return AppLayout()
 
@@ -124,20 +123,17 @@ class OximeterApp(App):
 	def save_config(self):
 		names = []
 		addresses = []
-		notes = []
+
 		for i in self.root.ids.container.children:
 			names.append(i.name)
 			addresses.append(i.address)
-			notes.append(i.notes)
 
 		names.reverse()
 		addresses.reverse()
-		notes.reverse()
 
 		# set the data in the config
 		self.config.set('patients', 'name', str(names))
 		self.config.set('patients', 'address', str(addresses))
-		self.config.set('patients', 'notes', str(notes))
 
 		# write the config file
 		self.config.write()
@@ -146,20 +142,17 @@ class OximeterApp(App):
 		# extract saved data from the config
 		names_str = self.config.get('patients', 'name')
 		addresses_str = self.config.get('patients', 'address')
-		notes_str = self.config.get('patients', 'notes')
 
 		# use the extracted data to build the Labels
 		names = ast.literal_eval(names_str)
 		addresses = ast.literal_eval(addresses_str)
-		notes = ast.literal_eval(notes_str)
 
 		#add patient cards from previous session
-		for name,address,note in zip(names,addresses,notes):
+		for name,address in zip(names,addresses):
 			patient = Patient() #create new Patient object
 			#set properties according to saved data
 			patient.name = name
 			patient.address = address
-			patient.notes = note
 			self.root.ids.container.add_widget(patient)
 			patient.save() #Save the current object to patients list
 

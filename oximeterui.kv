@@ -102,7 +102,7 @@
 			ScaleLabel:
 				text: "{}%".format(root.oxygen)
 		    	color: font_color
-			    font_size: '24sp'
+			    font_size: '20sp'
 				canvas.before:
 			        Color:
 			            rgb: (31/255,40/255,51/255)
@@ -164,27 +164,34 @@
 				orientation: "horizontal"	
 				size_hint: 1,0.3
 				spacing: 5
+				pos_hint: {"right":1}
 
-				BoxLayout:
-					size_hint: 0.4,1
-					orientation: "vertical"
+				# BoxLayout:
+					# size_hint: 0.4,1
+					# orientation: "vertical"
+					# canvas.before:
+						# Color:
+							# rgb: (0,1,0)
+						# Rectangle:
+							# size: self.size
+							# pos: self.pos
 
-					ScaleLabel:
-						text: "Battery: {}%\nStatus: {}".format(root.battery,root.status)
-						font_size: '15sp'
-						pos_hint: {'center_x':0.3}
+				ScaleLabel:
+					text: "Battery: {}%\nStatus: {}".format(root.battery,root.status)
+					font_size: '15sp'
+					size_hint: 0.2,1
 
 				CardButton:
 					text: "Save"
 					bold: True
 					on_release: root.save()
-					size_hint: 0.1,1
+					size_hint: 0.1,0.9
 
 				CardButton:
 					text: "Delete"
 					bold: True
 					on_release: root.delete()
-					size_hint: 0.1,1
+					size_hint: 0.1,0.9
 
 <Label>
 	color: (0,0,0,1)
