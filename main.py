@@ -1,5 +1,4 @@
 import kivy
-from matplotlib import ticker
 kivy.require('2.0.0')
 
 import ast
@@ -11,6 +10,9 @@ from kivy.uix.widget import Widget
 from kivy.lang import Builder
 from kivy.core.window import Window
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.button import Button
+from kivy.uix.label import Label
+from kivy.uix.popup import Popup
 from kivy.clock import Clock
 from kivy.properties import StringProperty
 from kivy.properties import NumericProperty
@@ -27,7 +29,7 @@ class Patient(BoxLayout):
 	status = StringProperty('')
 	battery = NumericProperty()
 
-	#these are user inputs. can be changed whenever the user wants as long as save is pressed
+	#these are user inputs. can be changed whenever the user wants as long as Save is pressed
 	name = StringProperty('')
 	address = StringProperty('')
 
@@ -45,10 +47,10 @@ class Patient(BoxLayout):
 
 	#some urlRequest functions
 	def on_success(self,req,result):
-		if result[0]:
+		if result[0]['status'] == 'success': ## THIS IS NOT THE FINAL PARSER FOR REQUEST 
 			self.oxygen = result[0]['random']
 			if self.oxygen < 95:
-				notification.notify(title="Alert",message=f"{self.name} is currently at {self.oxygen}%",timeout=10,ticker="Spo2 Level Low",toast=True)
+				notification.notify(title="Alert",message=f"{self.name} is currently at {self.oxygen}%",timeout=10)
 		self.status = 'Connected'
 
 	def on_fail(self,req,result):
@@ -65,15 +67,23 @@ class Patient(BoxLayout):
 
 	#update patient values
 	def update(self):
-		#placeholder, must be the web server of the esp8266 (the ip)
-		url = "https://csrng.net/csrng/csrng.php?min=93&max=95"
-		# url = "https://www.google.com/"
-		r = UrlRequest(url,on_success=self.on_success,on_progress=self.on_progress,on_failure=self.on_fail,ca_file=cfi.where(),verify=True)
-		self.battery = random.randint(1,100)
+		# url = "https://csrng.net/csrng/csrng.php?min=93&max=100"
+		url = self.address
+		if url:
+			r = UrlRequest(url,on_success=self.on_success,on_progress=self.on_progress,on_failure=self.on_fail,on_error=self.on_error,ca_file=cfi.where(),verify=True)
+			self.battery = random.randint(1,100)
+			print("valid address")
 
 	def save(self):
 		self.name = self.ids.name.text
 		self.address = self.ids.ipaddress.text
+
+		if self.name:
+			self.ids.name.disabled = True
+			
+
+		if self.address:
+			self.ids.ipaddress.disabled = True
 
 		if self not in patients:
 			patients.append(self)
@@ -110,6 +120,7 @@ class OximeterApp(App):
 		config.setdefaults('patients',{'name':'[]','address':'[]'})
 
 	def build(self):
+		Window.bind(on_request_close=self.on_request_close)
 		if platform == 'android':
 			Window.borderless = 1
 			Window.softinput_mode = "below_target"
@@ -119,6 +130,25 @@ class OximeterApp(App):
 			Window.size = (650,650)
 		return AppLayout()
 
+	def on_request_close(self, *args):
+		self.textpopup(title='Exit', text='Are you sure?')
+		return True
+
+	def textpopup(self, title='', text=''):
+		"""Open the pop-up with the name.
+		:param title: title of the pop-up to open
+		:type title: str
+		:param text: main text of the pop-up to open
+		:type text: str
+		:rtype: None
+		"""
+		box = BoxLayout(orientation='vertical')
+		box.add_widget(Label(text=text,color=(1,1,1,1)))
+		mybutton = Button(text='Yes', size_hint=(1, 0.25),color = (1,1,1,1))
+		box.add_widget(mybutton)
+		popup = Popup(title=title, content=box, size_hint=(0.5,0.3))
+		mybutton.bind(on_release=self.stop)
+		popup.open()
 
 	def save_config(self):
 		names = []
@@ -163,6 +193,7 @@ class OximeterApp(App):
 		self.load_my_config()
 
 	def on_pause(self):
+		self.save_config()
 		return True
 
 
