@@ -1,3 +1,4 @@
+import time
 import kivy
 kivy.require('2.0.0')
 
@@ -6,6 +7,7 @@ import random
 import certifi as cfi
 from plyer import notification
 from kivy.app import App
+from kivymd.app import MDApp
 from kivy.uix.widget import Widget
 from kivy.lang import Builder
 from kivy.core.window import Window
@@ -17,7 +19,14 @@ from kivy.clock import Clock
 from kivy.properties import StringProperty
 from kivy.properties import NumericProperty
 from kivy.network.urlrequest import UrlRequest
+from kivy.config import Config
 from kivy.utils import platform
+from kivymd.toast import toast
+from kivy.core.clipboard import Clipboard
+
+ANDROID = 1 if platform == 'android' else None
+
+# Config.set('kivy','window_icon','img/logo.png')
 
 patients = []
 widgets = []
@@ -49,7 +58,7 @@ class Patient(BoxLayout):
 	def on_success(self,req,result):
 		if result[0]['status'] == 'success': ## THIS IS NOT THE FINAL PARSER FOR REQUEST 
 			self.oxygen = result[0]['random']
-			if self.oxygen < 95:
+			if 100 < self.oxygen < 95:
 				notification.notify(title="Alert",message=f"{self.name} is currently at {self.oxygen}%",timeout=10)
 		self.status = 'Connected'
 
@@ -90,6 +99,29 @@ class Patient(BoxLayout):
 		if self.ids.patient_card not in widgets:
 			widgets.append(self.ids.patient_card)
 
+		toast('Saved!',duration=1.5)
+
+	def clear_name(self):
+		print("aha")
+		self.name = ""
+		self.ids.name.text = ""
+
+	def clear_address(self):
+		self.address = ""
+		self.ids.ipaddress.text = ""
+
+	def disable_name(self):
+		self.ids.name.disabled = False
+
+	def disable_address(self):
+		self.ids.ipaddress.disabled = False
+
+	def paste_name(self):
+		self.ids.name.text = Clipboard.paste()
+
+	def paste_address(self):
+		self.ids.ipaddress.text = Clipboard.paste()
+
 
 	#delete all widgets and redraw all except the one deleted
 	def delete(self):
@@ -101,6 +133,8 @@ class Patient(BoxLayout):
 		self.app.root.ids.container.clear_widgets()
 		for i in patients:
 			self.app.root.ids.container.add_widget(i)
+		
+		toast('Delete Successful', duration=1.5)
 
 class AppLayout(Widget):
 
@@ -115,13 +149,15 @@ class AppLayout(Widget):
 				self.ids.container.add_widget(i)
 
 
-class OximeterApp(App):
+class OxymappApp(MDApp):
 	def build_config(self,config):
 		config.setdefaults('patients',{'name':'[]','address':'[]'})
 
 	def build(self):
+		self.icon = "img/logo2.png"
 		Window.bind(on_request_close=self.on_request_close)
-		if platform == 'android':
+
+		if ANDROID:
 			Window.borderless = 1
 			Window.softinput_mode = "below_target"
 			Window.keyboard_anim_args = {"d":0.2,"t":"linear"}
@@ -198,4 +234,4 @@ class OximeterApp(App):
 
 
 if __name__ in ("__main__","__android__"):
-	OximeterApp().run()
+	OxymappApp().run()

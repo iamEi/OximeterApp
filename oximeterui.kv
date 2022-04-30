@@ -8,13 +8,16 @@
 #:set font_color (0,0,0)
 #:set btn_color (1,1,1)
 
+<Label>:
+    font_name: 'fonts/PublicSans-SemiBold.ttf'
+
 <AppLayout>
 	BoxLayout:
 		orientation: "vertical"
 		size: root.width,root.height
 		BoxLayout:
 			orientation: "horizontal"
-			size_hint: (1,0.1) if platform=='android' else (0,0)
+			size_hint: (1,0.1) if platform =='android' else (0,0)
 			canvas:
 				Color:
 					rgb: scheme[0]
@@ -22,11 +25,26 @@
 					size: self.size
 					pos: self.pos
 
+			Button:
+				text: "◄"
+				font_name: "fonts/NotoSerif-Bold.ttf"
+				font_size: "12sp"
+				color: (1,1,1)
+				size_hint: 0.1,1
+				on_release: app.on_request_close()
+				canvas.before:
+					Color:
+						rgb: scheme[0] if self.state == 'normal' else scheme[1]
+					RoundedRectangle:
+						size: self.size
+						pos: self.pos
+						radius: [20]
+
 			ScaleLabel:
-				text: "Oximeter App"
+				text: "Oxymapp"
 				bold: True
 				color: btn_color
-				pos_hint: {"center_x":1}
+				pos_hint: {"center_x":0.5}
 				font_size: '24sp'
 				padding_y: 5
 				
@@ -149,9 +167,9 @@
 					multiline: False
 				
 				CardButton:
-					text: "Edit"
+					text: "Paste" if not name.text else ("Edit" if name.disabled == True else "Clear")
 					bold: True
-					on_release: name.disabled = False
+					on_release: root.paste_name() if self.text == "Paste" else (root.clear_name() if self.text == "Clear" else root.disable_name())
 					size_hint: 0.2,1
 
 				ScaleLabel:
@@ -167,9 +185,9 @@
 					multiline: False
 
 				CardButton:
-					text: "Edit"
+					text: "Paste" if not ipaddress.text else ("Edit" if ipaddress.disabled == True else "Clear")
 					bold: True
-					on_release: ipaddress.disabled = False
+					on_release: root.paste_address() if self.text == "Paste" else (root.clear_address() if self.text == "Clear" else root.disable_address())
 					size_hint: 0.2,1
 
 			BoxLayout:
