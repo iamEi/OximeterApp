@@ -28,6 +28,7 @@ from kivy.network.urlrequest import UrlRequest
 from kivy.core.clipboard import Clipboard
 from kivy.storage.jsonstore import JsonStore
 
+TESTING = 0 #SET TO 1 IF PROGRAM IS IN TESTING PHASE 
 ANDROID = 1 if platform == 'android' else None
 
 patients = []
@@ -71,9 +72,12 @@ class Patient(BoxLayout):
 	def on_success(self,req,result):
 		#Extract Value from HTML
 		b4 = BeautifulSoup(result,"html.parser")
-		oxygen_val = b4.body.table.find("td",class_="field").text
+		webpage_body = b4.body.table
+		oxygen_val = webpage_body.find(id="spo2").text
+		pulse_val = webpage_body.find(id="heartrate").text
 
 		self.oxygen = int(oxygen_val)
+		self.pulse = int(pulse_val)
 		if 100 < self.oxygen or self.oxygen < 95:
 			self.app.run_on_thread(self.notify)
 		self.status = 'Connected'
@@ -102,9 +106,10 @@ class Patient(BoxLayout):
 					ca_file=cfi.where(),
 					verify=True)
 		#For Testing Purpposes
-		self.oxygen = random.randint(95,100)
-		self.battery = random.randint(1,100) 
-		self.pulse = random.randint(50,100)
+		if TESTING:
+			self.oxygen = random.randint(95,100)
+			self.battery = random.randint(1,100) 
+			self.pulse = random.randint(50,100)
 
 	def save(self):
 		self.saved = True
