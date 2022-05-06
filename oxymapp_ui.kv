@@ -10,6 +10,12 @@
 
 <Label>:
     font_name: 'fonts/PublicSans-SemiBold.ttf'
+	color: (0,0,0,1)
+
+<Button>:
+	background_color: (0,0,0,0)
+	background_normal: ''
+	font_name: 'fonts/PublicSans-SemiBold.ttf'
 
 <AppLayout>
 	BoxLayout:
@@ -25,13 +31,23 @@
 					size: self.size
 					pos: self.pos
 
+			ScaleLabel:
+				text: "Oxymapp"
+				size_hint: 0.5,1
+				pos_hint: {'right':0.1}
+				bold: True
+				color: btn_color
+				font_size: '24sp'
+				
+
 			Button:
-				text: "◄"
+				text: ""
 				font_name: "fonts/NotoSerif-Bold.ttf"
-				font_size: "12sp"
+				font_size: "15sp"
 				color: (1,1,1)
-				size_hint: 0.1,1
-				on_release: app.on_request_close()
+				size_hint: 0.05,0.4
+				on_release: app.show_logs()
+				pos_hint: {'center_y':0.5}
 				canvas.before:
 					Color:
 						rgb: scheme[0] if self.state == 'normal' else scheme[1]
@@ -39,14 +55,7 @@
 						size: self.size
 						pos: self.pos
 						radius: [20]
-
-			ScaleLabel:
-				text: "Oxymapp"
-				bold: True
-				color: btn_color
-				pos_hint: {"center_x":0.5}
-				font_size: '24sp'
-				padding_y: 5
+						source: 'img/logs.png'
 				
 		BoxLayout:
 			orientation: "vertical"
@@ -78,7 +87,7 @@
 						cols: 1
 						size_hint_y: None
 						padding: 10
-						spacing: 10
+						spacing: 15
 						row_default_height: root.height*0.15 if platform == 'android' else root.height*.25
 						row_force_default: True
 						height: self.minimum_height
@@ -118,9 +127,11 @@
 			pos_hint: {'center_y': 0.5}
 
 			ScaleLabel:
-				text: "{}%".format(root.oxygen)
+				markup: True
+				oxygen_size: '18sp' if platform=='android' else '24sp'
+				bpm_size: '10sp' if platform=='android' else '12sp'
+				text: "[size={}]{}%[/size]\n[size={}][color=#c43230]  {}bpm[/color][/size]".format(self.oxygen_size,root.oxygen,self.bpm_size,root.pulse)
 		    	color: font_color
-			    font_size: '24sp'
 				canvas.before:
 			        Color:
 			            rgb: (31/255,40/255,51/255)
@@ -174,7 +185,7 @@
 
 				ScaleLabel:
 					size_hint: 0.4,0.5
-					text: "IP Address"
+					text: "Address"
 					font_size: '15sp'
 
 				TextInput:
@@ -201,8 +212,8 @@
 
 					ScaleLabel:
 						text: "Battery: {}%\nStatus: {}".format(root.battery,root.status)
-						font_size: '15sp'
-						pos_hint: {'center_x':0.3}
+						font_size: '12sp' if platform=='android' else '15sp'
+						pos_hint: {'center_x':0.5}
 
 				CardButton:
 					text: "Delete"
@@ -215,14 +226,6 @@
 					bold: True
 					on_release: root.save()
 					size_hint: 0.1,1
-
-
-<Label>
-	color: (0,0,0,1)
-
-<Button>
-	background_color: (0,0,0,0)
-	background_normal: ''
 
 <CardButton@Button>
 	font_size: '12sp'
