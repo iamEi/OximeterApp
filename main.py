@@ -28,7 +28,7 @@ from kivy.network.urlrequest import UrlRequest
 from kivy.core.clipboard import Clipboard
 from kivy.storage.jsonstore import JsonStore
 
-TESTING = 0 #SET TO 1 IF PROGRAM IS IN TESTING PHASE 
+TESTING = False #SET TO TRUE IF PROGRAM IS IN TESTING PHASE 
 ANDROID = 1 if platform == 'android' else None
 
 patients = []
@@ -53,7 +53,7 @@ class Patient(BoxLayout):
 	def __init__(self):
 		super().__init__()
 		#scheduled to update the values in the screen
-		Clock.schedule_interval(lambda dt:self.update(), 1)
+		Clock.schedule_interval(lambda dt:self.update(), 2)
 		Clock.schedule_once(self.init_app)
 
 	#initialize app object(to access widgets from another class)
@@ -72,15 +72,16 @@ class Patient(BoxLayout):
 	def on_success(self,req,result):
 		#Extract Value from HTML
 		b4 = BeautifulSoup(result,"html.parser")
-		webpage_body = b4.body.table
-		oxygen_val = webpage_body.find(id="spo2").text
-		pulse_val = webpage_body.find(id="heartrate").text
+		webpage = b4.body.table
+		oxygen_val = webpage.find(id="spo2").text
+		pulse_val = webpage.find(id="heartrate").text
 
 		self.oxygen = int(oxygen_val)
 		self.pulse = int(pulse_val)
 		if 100 < self.oxygen or self.oxygen < 95:
 			self.app.run_on_thread(self.notify)
 		self.status = 'Connected'
+		self.battery = 100
 
 	def on_fail(self,req,result):
 		self.status = 'Disconnected'
@@ -90,13 +91,15 @@ class Patient(BoxLayout):
 
 	def on_error(self,req,error):
 		self.saved = False
+		self.status = "Not Connected"
+		self.battery = 0
 		toast(f"Couldn't Connect to {self.address}\nCheck and Save Again")
 		
 	#update patient values
 	def update(self):
 		if self.saved:
-			url = self.address
-			if url:
+			if self.address:
+				url = "http://"+self.address if self.address[:3].isdigit() else self.address
 				r = UrlRequest(
 					url,
 					on_success=self.on_success,
@@ -107,7 +110,7 @@ class Patient(BoxLayout):
 					verify=True)
 		#For Testing Purpposes
 		if TESTING:
-			self.oxygen = random.randint(95,100)
+			self.oxygen = random.randint(94,100)
 			self.battery = random.randint(1,100) 
 			self.pulse = random.randint(50,100)
 
@@ -126,6 +129,8 @@ class Patient(BoxLayout):
 		if self not in patients:
 			patients.append(self)
 
+
+		self.status = 'Connecting...'
 		toast('Saved!')
 
 	def clear_name(self):
